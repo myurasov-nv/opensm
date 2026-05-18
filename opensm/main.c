@@ -473,13 +473,28 @@ static ib_net64_t get_port_guid(IN osm_opensm_t * p_osm, uint64_t port_guid)
 		       cl_hton64(attr_array[0].port_guid));
 		return attr_array[0].port_guid;
 	}
-	/* If port_guid is 0 - use the first connected port */
+	/* If port_guid is 0 - use the first connected port.
+	 * Prefer InfiniBand-link-layer ports so that hosts with mixed
+	 * IB + RoCE/iWARP CAs (e.g. mlx5_0 alongside irdma0) do not pick
+	 * an Ethernet port which cannot run a subnet manager. Fall back to
+	 * any up port if no InfiniBand port is available, preserving the
+	 * legacy behavior for vendor backends that do not report a
+	 * link layer (link_layer == IB_LINK_LAYER_UNKNOWN). */
 	if (port_guid == 0) {
-		for (i = 0; i < num_ports; i++)
-			if (attr_array[i].link_state > IB_LINK_DOWN)
+		uint32_t fallback = num_ports;
+		for (i = 0; i < num_ports; i++) {
+			if (attr_array[i].link_state <= IB_LINK_DOWN)
+				continue;
+			if (attr_array[i].link_layer ==
+			    IB_LINK_LAYER_INFINIBAND)
 				break;
+			if (fallback == num_ports &&
+			    attr_array[i].link_layer !=
+			    IB_LINK_LAYER_ETHERNET)
+				fallback = i;
+		}
 		if (i == num_ports)
-			i = 0;
+			i = (fallback < num_ports) ? fallback : 0;
 		printf("Using default GUID 0x%" PRIx64 "\n",
 		       cl_hton64(attr_array[i].port_guid));
 		return attr_array[i].port_guid;

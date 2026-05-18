@@ -54,6 +54,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <linux/types.h>	/* for __be64 with older libibumad */
@@ -687,6 +688,13 @@ osm_vendor_get_all_port_attr(IN osm_vendor_t * const p_vend,
 				attr->sm_lid = ca.ports[j]->sm_lid;
 				attr->sm_sl = ca.ports[j]->sm_sl;
 				attr->link_state = ca.ports[j]->state;
+				if (!strcmp(ca.ports[j]->link_layer, "InfiniBand") ||
+				    !strcmp(ca.ports[j]->link_layer, "IB"))
+					attr->link_layer = IB_LINK_LAYER_INFINIBAND;
+				else if (!strcmp(ca.ports[j]->link_layer, "Ethernet"))
+					attr->link_layer = IB_LINK_LAYER_ETHERNET;
+				else
+					attr->link_layer = IB_LINK_LAYER_UNKNOWN;
 				if (attr->num_pkeys && attr->p_pkey_table) {
 					if (attr->num_pkeys > ca.ports[j]->pkeys_size)
 						attr->num_pkeys = ca.ports[j]->pkeys_size;
