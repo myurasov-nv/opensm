@@ -9636,6 +9636,24 @@ typedef struct _ib_port_attr_mod {
 *	ib_port_cap_t
 *****/
 
+/****d* Access Layer/ib_link_layer_t
+* NAME
+*	ib_link_layer_t
+*
+* DESCRIPTION
+*	Link layer reported by the transport for a local port.  Used to
+*	prefer InfiniBand ports over RoCE/iWARP when auto-selecting a
+*	default port to bind to.
+*
+* SYNOPSIS
+*/
+typedef enum _ib_link_layer {
+	IB_LINK_LAYER_UNKNOWN = 0,
+	IB_LINK_LAYER_INFINIBAND,
+	IB_LINK_LAYER_ETHERNET
+} ib_link_layer_t;
+/*****/
+
 /****s* Access Layer/ib_port_attr_t
 * NAME
 *	ib_port_attr_t
@@ -9676,6 +9694,7 @@ typedef struct _ib_port_attr {
 	uint16_t qkey_ctr;
 	uint16_t num_gids;
 	uint16_t num_pkeys;
+	ib_link_layer_t link_layer;
 	/*
 	 * Pointers at the end of the structure to allow doing a simple
 	 * memory comparison of contents up to the first pointer.
